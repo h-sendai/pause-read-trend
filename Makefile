@@ -1,4 +1,4 @@
-PROG = read-trend
+PROG = pause-read-trend
 CFLAGS += -g -O2 -Wall
 CFLAGS += -std=gnu99
 # CFLAGS += -pthread
@@ -14,6 +14,7 @@ OBJS += get_num.o
 OBJS += set_timer.o
 OBJS += set_cpu.o
 OBJS += logUtil.o
+OBJS += flow_ctrl_pause.o
 $(PROG): $(OBJS)
 
 clean:
