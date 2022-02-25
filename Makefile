@@ -7,6 +7,8 @@ CFLAGS += -std=gnu99
 # LDFLAGS += -pthread
 
 all: $(PROG)
+	@sudo setcap 'CAP_NET_RAW+eip' $(PROG)
+
 OBJS += $(PROG).o
 OBJS += my_signal.o
 OBJS += my_socket.o

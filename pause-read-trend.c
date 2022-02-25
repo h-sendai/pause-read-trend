@@ -17,6 +17,7 @@
 #include "set_cpu.h"
 #include "get_num.h"
 #include "logUtil.h"
+#include "flow_ctrl_pause.h"
 
 volatile sig_atomic_t has_alarm = 0;
 volatile sig_atomic_t has_int   = 0;
@@ -25,8 +26,9 @@ int debug = 0;
 
 int usage(void)
 {
-    char msg[] = "Usage: ./read-trend [-c cpu_num] [-d] [-P] [-p port] [-q] [-q ...] [-r rcvbuf] [-b bufsize] [-i interval] [-o output_file] [-s sleep_usec] ip_address[:port]\n"
+    char msg[] = "Usage: ./read-trend [-c cpu_num] [-d] [-P] [-p port] [-q] [-q ...] [-r rcvbuf] [-b bufsize] [-i interval] [-o output_file] [-s sleep_usec] ip_address[:port] [-I pause_interval_sec] if_name pause_time\n"
                  "default: port 24, read bufsize 1024kB, interval 1 second\n"
+                 "-I: pause_interval_sec (default 5 seconds)\n"
                  "suffix k for kilo, m for mega to speficy bufsize\n"
                  "If both -p port and ip_address:port are specified, ip_address:port port wins\n"
                  "Options\n"
@@ -79,9 +81,10 @@ int main(int argc, char *argv[])
     char *output = "";
     int sleep_usec = 0;
     int use_shutdown = 0;
+    int pause_interval_sec = 5;
 
     int c;
-    while ( (c = getopt(argc, argv, "c:dhi:o:Pp:qr:s:b:S")) != -1) {
+    while ( (c = getopt(argc, argv, "c:dhi:I:o:Pp:qr:s:b:S")) != -1) {
         switch (c) {
             case 'h':
                 usage();
@@ -95,6 +98,9 @@ int main(int argc, char *argv[])
                 break;
             case 'i':
                 interval_sec_str = optarg;
+                break;
+            case 'I':
+                pause_interval_sec = strtol(optarg, NULL, 0);
                 break;
             case 'o':
                 output = optarg;
@@ -126,7 +132,7 @@ int main(int argc, char *argv[])
     }
     argc -= optind;
     argv += optind;
-    if (argc != 1) {
+    if (argc != 3) {
         usage();
         exit(1);
     }
@@ -136,6 +142,21 @@ int main(int argc, char *argv[])
     char *remote_host = strsep(&tmp, ":");
     if (tmp != NULL) {
         port = strtol(tmp, NULL, 0);
+    }
+
+    char *if_name = argv[1];
+    int pause_time = get_num(argv[2]);
+    /* allow to specify pause time as 64k */
+    if (pause_time == 65536) {
+        pause_time = 65535;
+    }
+    if (pause_time < 0 || pause_time > 65535) {
+        fprintf(stderr, "pause_time out of range: %d (should be 0 - 65535)\n", pause_time);
+        exit(1);
+    }
+
+    if (debug) {
+        fprintf(stderr, "if_name: %s, pause_time: %d\n", if_name, pause_time);
     }
 
     if (cpu_num != -1) {
@@ -174,6 +195,11 @@ int main(int argc, char *argv[])
         }
     }
     
+    int pause_socket = create_pause_socket();
+    if (pause_socket < 0) {
+        exit(1);
+    }
+
     if (connect_tcp(sockfd, remote_host, port) < 0) {
         errx(1, "tcp_connect");
     }
@@ -199,9 +225,11 @@ int main(int argc, char *argv[])
     gettimeofday(&start, NULL);
     prev = start;
 
+    int alarm_count = 0; /* counter for alarm receive count */
     for ( ; ; ) {
         if (has_alarm) {
             has_alarm = 0;
+            alarm_count += 1;
             struct timeval now, elapse;
             gettimeofday(&now, NULL);
             timersub(&now, &start, &elapse);
@@ -218,6 +246,13 @@ int main(int argc, char *argv[])
             interval_read_bytes = 0;
             interval_read_count = 0;
             prev = now;
+
+            if (alarm_count % pause_interval_sec == 0) {
+                if (debug) {
+                    fprintf(stderr, "# send_pause_packet\n");
+                }
+                send_pause_packet(pause_socket, if_name, pause_time);
+            }
             if (sleep_usec > 0) {
                 usleep(sleep_usec);
             }
