@@ -1,0 +1,10 @@
+#!/bin/sh
+
+if=ens6f0
+remote=amaneq0:24
+pause_time=64k
+sudo tcpdump -nn -i $if -w pause.cap -s 68 &
+sleep 1
+timeout 20 ../pause-read-trend $remote $if $pause_time
+sleep 1
+sudo pkill tcpdump
