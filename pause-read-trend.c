@@ -26,9 +26,10 @@ int debug = 0;
 
 int usage(void)
 {
-    char msg[] = "Usage: ./read-trend [-c cpu_num] [-d] [-P] [-p port] [-q] [-q ...] [-r rcvbuf] [-b bufsize] [-i interval] [-o output_file] [-s sleep_usec] ip_address[:port] [-I pause_interval_sec] if_name pause_time\n"
+    char msg[] = "Usage: ./read-trend [-c cpu_num] [-d] [-P] [-p port] [-q] [-q ...] [-r rcvbuf] [-b bufsize] [-i interval] [-o output_file] [-s sleep_usec] [-v] ip_address[:port] [-I pause_interval_sec] if_name pause_time\n"
                  "default: port 24, read bufsize 1024kB, interval 1 second\n"
-                 "-I: pause_interval_sec (default 5 seconds)\n"
+                 "-I pause_interval_sec: (default 5 seconds)\n"
+                 "-v: print send pause message\n"
                  "suffix k for kilo, m for mega to speficy bufsize\n"
                  "If both -p port and ip_address:port are specified, ip_address:port port wins\n"
                  "Options\n"
@@ -82,9 +83,10 @@ int main(int argc, char *argv[])
     int sleep_usec = 0;
     int use_shutdown = 0;
     int pause_interval_sec = 5;
+    int verbose = 0;
 
     int c;
-    while ( (c = getopt(argc, argv, "c:dhi:I:o:Pp:qr:s:b:S")) != -1) {
+    while ( (c = getopt(argc, argv, "c:dhi:I:o:Pp:qr:s:b:Sv")) != -1) {
         switch (c) {
             case 'h':
                 usage();
@@ -125,6 +127,9 @@ int main(int argc, char *argv[])
                 break;
             case 'S':
                 use_shutdown = 1;
+                break;
+            case 'v':
+                verbose = 1;
                 break;
             default:
                 break;
@@ -248,7 +253,7 @@ int main(int argc, char *argv[])
             prev = now;
 
             if (alarm_count % pause_interval_sec == 0) {
-                if (debug) {
+                if (verbose) {
                     fprintf(stderr, "# send_pause_packet\n");
                 }
                 send_pause_packet(pause_socket, if_name, pause_time);
