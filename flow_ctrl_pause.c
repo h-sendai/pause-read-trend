@@ -70,7 +70,7 @@ int create_pause_socket()
 
 int send_pause_packet(int sockfd, char *if_name, int pause_time)
 {
-    int i;
+    //int i;
     
     if (pause_time < 0 || pause_time > 65535) {
         warn("too large pause_time: %d", pause_time);
@@ -100,14 +100,16 @@ int send_pause_packet(int sockfd, char *if_name, int pause_time)
     addr.sll_addr[4]  = 0x00;
     addr.sll_addr[5]  = 0x01;
 
-    unsigned char en_payload[46];
+    //unsigned char en_payload[46];
+    /* padding to get minimum length will be done in the OS layer */
+    unsigned char en_payload[4];
     en_payload[0] = 0x00;
     en_payload[1] = 0x01;
     en_payload[2] = pause_time >> 8;
     en_payload[3] = pause_time;
-    for (i = 4; i < 46; ++i) {
-        en_payload[i] = 0xff; /* padding */
-    }
+    //for (i = 4; i < 46; ++i) {
+    //    en_payload[i] = 0xff; /* padding */
+    //}
 
     /* 5. Send the Ethernet frame. */
     if (sendto(sockfd, en_payload, sizeof(en_payload), 0, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
