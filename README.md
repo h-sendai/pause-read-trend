@@ -57,7 +57,7 @@ rpm
 
 ``rpm/SRPMS``に移動して
 ```
-dnf install --source kernel
+dnf download --source kernel
 ```
 でkernel SRPMファイルが取得できる。
 
