@@ -70,6 +70,14 @@ rpmbuild -bp kernel.spec
 ```
 
 で``rpm/BUILD``以下にCentOS Stream 8カーネルソースが展開される。
+``rpmbuild -bp kernel.spec``で依存物が足りないといわれたら
+以下のコマンドで一括で依存物が入る。
+
+```
+dnf install dnf-plugins-core
+dnf config-manager --enable powertools
+dnf builddep kernel.spec
+```
 
 ### configファイルのコピー、ドライバコンパイルの確認
 
