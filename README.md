@@ -65,6 +65,8 @@ dnf install --source kernel
 
 ```
 rpm -ihv kernel-4.18.0-365.el8.src.rpm
+cd ../SPECS
+rpmbuild -bp kernel.spec
 ```
 
 で``rpm/BUILD``以下にCentOS Stream 8カーネルソースが展開される。
