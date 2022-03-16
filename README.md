@@ -34,6 +34,7 @@ https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=e7
 - rpmdevtoolsパッケージをインストールする。``dnf install rpmdevtools``
 - ``$HOME/.rpmmacors``を作って``%_topdir``を指定する。これで指定したディレクトリ以下が
 作業場所になる。
+- $HOME/rpm以下での作業はroot権限は必要ない。
 
 ```
 # $HOME/.rpmmacros
@@ -71,12 +72,12 @@ rpmbuild -bp kernel.spec
 
 で``rpm/BUILD``以下にCentOS Stream 8カーネルソースが展開される。
 ``rpmbuild -bp kernel.spec``で依存物が足りないといわれたら
-以下のコマンドで一括で依存物が入る。
+以下のコマンドで一括で依存物が入る(以下のコマンドはrootで実行する)。
 
 ```
-dnf install dnf-plugins-core
-dnf config-manager --enable powertools
-dnf builddep kernel.spec
+root# dnf install dnf-plugins-core
+root# dnf config-manager --enable powertools
+root# dnf builddep kernel.spec
 ```
 
 ### configファイルのコピー、ドライバコンパイルの確認
