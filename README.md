@@ -100,6 +100,18 @@ strip --strip-debug drivers/net/ethernet/intel/i40e
 バージョンが取得できる。
 (注終わり)
 
+(注)``configs/``ディレクトリに各アーキテクチャのconfigファイルがあるが
+これを``cp configs/... .config``とする必要はない。というかコピーすると
+ロード時に
+
+```
+[   16.110529] ixgbe: Unknown symbol lockdep_rcu_suspicious (err 0)
+[   16.177005] ixgbe: Unknown symbol __asan_report_load1_noabort (err 0)
+[   16.228153] ixgbe: Unknown symbol debug_dma_mapping_error (err 0)
+:
+```
+となるドライバができてしまう。(注終わり）
+
 ``make M=drivers/net/ethernet/intel/i40e``の出力は次のようになる:
 
 ```
