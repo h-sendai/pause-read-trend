@@ -112,6 +112,19 @@ strip --strip-debug drivers/net/ethernet/intel/i40e
 ```
 となるドライバができてしまう。(注終わり）
 
+``make oldconfig``の出力例:
+
+```
+% make oldconfig
+scripts/kconfig/conf  --oldconfig Kconfig
+#
+# using defaults found in /boot/config-4.18.0-365.el8.x86_64
+#
+#
+# configuration written to .config
+#
+```
+
 ``make M=drivers/net/ethernet/intel/i40e``の出力は次のようになる:
 
 ```
