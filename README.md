@@ -101,8 +101,10 @@ strip --strip-debug drivers/net/ethernet/intel/i40e
 (注終わり)
 
 (注)``configs/``ディレクトリに各アーキテクチャのconfigファイルがあるが
-これを``cp configs/... .config``とする必要はない。というかコピーすると
-ロード時に
+これを``cp configs/... .config``とする必要はない。
+コピーするときにまちがって``kernel-4.18.0-x86_64-debug.config``を
+.configとしてコピーし、``make prepare; make modules_prepare; make M=...``
+するとロード時に
 
 ```
 [   16.110529] ixgbe: Unknown symbol lockdep_rcu_suspicious (err 0)
@@ -110,7 +112,7 @@ strip --strip-debug drivers/net/ethernet/intel/i40e
 [   16.228153] ixgbe: Unknown symbol debug_dma_mapping_error (err 0)
 :
 ```
-となるドライバができてしまう。(注終わり）
+となりロードできないドライバができてしまう。(注終わり）
 
 ``make oldconfig``の出力例:
 
