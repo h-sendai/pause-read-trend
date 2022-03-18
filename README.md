@@ -29,6 +29,8 @@ https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=e7
 この修正を取りのぞくとi40eでもユーザープロセスからpause frameを
 送ることができるようになる。以下CentOS Stream 8での作業方法。
 
+参考: https://wiki.centos.org/HowTos/BuildingKernelModules
+
 ### rpmファイル展開場所の確保
 
 - rpmdevtoolsパッケージをインストールする。``dnf install rpmdevtools``
@@ -84,11 +86,51 @@ root# dnf builddep kernel.spec
 
 ```
 cd rpm/BUILD/kernel-4.18.0-365.el8/linux-4.18.0-365.el8.x86_64
-cp configs/kernel-4.18.0-x86_64.config .config
 make oldconfig
 make prepare
 make modules_prepare
 make M=drivers/net/ethernet/intel/i40e
+strip --strip-debug drivers/net/ethernet/intel/i40e
+```
+
+(注)
+``make oldconfig``でプロンプトがでて入力を求められるときは
+稼働中のカーネルバージョンと、展開したカーネルソースのバージョンが
+一致していないので確認する。たとえば``uname -r``で稼働中のカーネル
+バージョンが取得できる。
+(注終わり)
+
+``make M=drivers/net/ethernet/intel/i40e``の出力は次のようになる:
+
+```
+localhost% make M=drivers/net/ethernet/intel/i40e
+
+  WARNING: Symbol version dump ./Module.symvers
+           is missing; modules will have no dependencies and modversions.
+
+  CC [M]  drivers/net/ethernet/intel/i40e/i40e_main.o
+  CC [M]  drivers/net/ethernet/intel/i40e/i40e_ethtool.o
+  CC [M]  drivers/net/ethernet/intel/i40e/i40e_adminq.o
+  CC [M]  drivers/net/ethernet/intel/i40e/i40e_common.o
+  CC [M]  drivers/net/ethernet/intel/i40e/i40e_hmc.o
+  CC [M]  drivers/net/ethernet/intel/i40e/i40e_lan_hmc.o
+  CC [M]  drivers/net/ethernet/intel/i40e/i40e_nvm.o
+  CC [M]  drivers/net/ethernet/intel/i40e/i40e_debugfs.o
+  CC [M]  drivers/net/ethernet/intel/i40e/i40e_diag.o
+  CC [M]  drivers/net/ethernet/intel/i40e/i40e_txrx.o
+  CC [M]  drivers/net/ethernet/intel/i40e/i40e_ptp.o
+  CC [M]  drivers/net/ethernet/intel/i40e/i40e_ddp.o
+  CC [M]  drivers/net/ethernet/intel/i40e/i40e_client.o
+  CC [M]  drivers/net/ethernet/intel/i40e/i40e_virtchnl_pf.o
+  CC [M]  drivers/net/ethernet/intel/i40e/i40e_xsk.o
+  CC [M]  drivers/net/ethernet/intel/i40e/i40e_dcb.o
+  CC [M]  drivers/net/ethernet/intel/i40e/i40e_dcb_nl.o
+  LD [M]  drivers/net/ethernet/intel/i40e/i40e.o
+  Building modules, stage 2.
+  MODPOST 1 modules
+  CC      drivers/net/ethernet/intel/i40e/i40e.mod.o
+  LD [M]  drivers/net/ethernet/intel/i40e/i40e.ko
+localhost%
 ```
 
 これでドライバファイルdrivers/net/ethernet/intel/i40e/i40e.ko
@@ -145,6 +187,7 @@ i40e_add_filter_to_drop_tx_flow_control_frames()
 ```
 cd rpm/BUILD/kernel-4.18.0-365.el8/linux-4.18.0-365.el8.x86_64
 make M=drivers/net/ethernet/intel/i40e
+strip --strip-debug drivers/net/ethernet/intel/i40e
 ```
 
 ### インストール
@@ -153,6 +196,9 @@ make M=drivers/net/ethernet/intel/i40e
 を作成し、ここに``i40e.ko``をコピーする。
 
 ### initramfsの生成
+
+稼働中のドライバは更新できないように思うのでinitramfs
+を作りなおしてリブートすることでコンパイルしたドライバを使う。
 
 ```
 root# depmod -a
